@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-contract = "4fGrHJbLbG5pRHQsvkMpFWPZ5QEY89RW1goNDAEm7u5w"
+contract = "HJHqL1vC4UMEYrrNqBEwfeK3XcWV2V2ZkfAeYNCMLdSe"
 
 [registry]
 url = "https://api.apr.dev"
@@ -17,3 +17,7 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[build]
+target = "bpfel-unknown-unknown"
+
