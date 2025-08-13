@@ -1,11 +1,12 @@
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js'
-import { Program, AnchorProvider, web3, BN, Idl } from '@coral-xyz/anchor'
+import { AnchorProvider, web3, BN, Idl } from '@coral-xyz/anchor'
+import { Program } from '@coral-xyz/anchor'
 import IDL from '../contract/target/idl/zetachain_gateway.json'
 
 export class SolanaClient {
   private connection: Connection
   private provider: AnchorProvider
-  private program: any // Temporarily use any to avoid type issues
+  private program: Program | null
   private programId: PublicKey
 
   constructor(wallet: any, network: 'devnet' | 'mainnet-beta' = 'devnet') {
@@ -22,30 +23,27 @@ export class SolanaClient {
         { commitment: 'confirmed' }
       )
       
-      // Store the program ID for later use
+      // Store the program ID from the IDL
       this.programId = new PublicKey(IDL.address)
       
-      // Temporarily disable program creation to avoid the 'in' operator error
-      // this.program = new Program(IDL as Idl, this.programId, this.provider)
+      // Initialize program as null initially
+      this.program = null
       
       console.log('SolanaClient initialized successfully')
     } catch (error) {
-      console.error('Failed to create program:', error)
-      throw new Error(`Failed to initialize Solana program: ${error}`)
+      console.error('Failed to create SolanaClient:', error)
+      throw new Error(`Failed to initialize Solana client: ${error}`)
     }
   }
 
   // Method to initialize the program after client creation
   async initializeProgram() {
     try {
-      // Try to create the program with a delay to avoid timing issues
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Create the program instance with correct constructor signature for Anchor 0.31.1
+      // Using the correct pattern: new Program(idl, programId, provider)
+      this.program = new Program(IDL as Idl, this.provider)
       
-      // TODO: Fix Program constructor for Anchor 0.31.1
-      // The constructor signature has changed significantly
-      // this.program = new Program(IDL as Idl, this.provider, this.programId)
-      
-      console.log('Program initialization skipped - using basic client for now')
+      console.log('Program initialized successfully:', this.programId.toString())
       return true
     } catch (error) {
       console.error('Failed to initialize program:', error)
@@ -61,13 +59,7 @@ export class SolanaClient {
     try {
       // Check if program is initialized
       if (!this.program) {
-        // Return a placeholder response for now
-        console.log('Program not initialized - returning placeholder response')
-        return { 
-          success: true, 
-          txHash: 'placeholder-tx-hash-' + Date.now(),
-          note: 'This is a placeholder response. Program initialization needs to be fixed.'
-        }
+        throw new Error('Program not initialized. Please call initializeProgram() first.')
       }
 
       // Convert recipient address to bytes array (20 bytes)
@@ -89,7 +81,7 @@ export class SolanaClient {
       // Call your existing deposit_and_call function
       const tx = await this.program.methods
         .depositAndCall(
-          new BN(7001), // ZetaChain chain ID (you can make this configurable)
+          new BN(7001), // ZetaChain chain ID (from contract)
           recipientBytes,
           new BN(amount * LAMPORTS_PER_SOL), // Convert SOL to lamports
           message
@@ -97,7 +89,7 @@ export class SolanaClient {
         .accounts({
           user: this.provider.wallet.publicKey,
           config: configPda,
-          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID
+          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID when known
           system_program: SystemProgram.programId,
         })
         .rpc()
@@ -116,6 +108,10 @@ export class SolanaClient {
     amount: number
   ) {
     try {
+      if (!this.program) {
+        throw new Error('Program not initialized. Please call initializeProgram() first.')
+      }
+
       const recipientBytes = this.hexToBytes(recipientAddress)
       
       const messagePayload = {
@@ -136,7 +132,7 @@ export class SolanaClient {
       const tx = await this.program.methods
         .depositSplTokenAndCall(
           mint,
-          new BN(7001), // ZetaChain chain ID
+          new BN(7001), // ZetaChain chain ID (from contract)
           recipientBytes,
           new BN(amount),
           message
@@ -147,9 +143,9 @@ export class SolanaClient {
           mint: mint,
           source_token_account: userTokenAccount,
           custody_token_account: custodyTokenAccount,
-          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID
-          token_program: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-          associated_token_program: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'),
+          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          token_program: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // SPL Token Program
+          associated_token_program: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'), // Associated Token Program
           system_program: SystemProgram.programId,
         })
         .rpc()
@@ -167,6 +163,10 @@ export class SolanaClient {
     message: string
   ) {
     try {
+      if (!this.program) {
+        throw new Error('Program not initialized. Please call initializeProgram() first.')
+      }
+
       const configPda = await this.getConfigAccount()
       
       const tx = await this.program.methods
@@ -178,7 +178,7 @@ export class SolanaClient {
         .accounts({
           user: this.provider.wallet.publicKey,
           config: configPda,
-          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID
+          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID when known
         })
         .rpc()
 
@@ -190,6 +190,10 @@ export class SolanaClient {
   }
 
   async getConfigAccount(): Promise<PublicKey> {
+    if (!this.program) {
+      throw new Error('Program not initialized')
+    }
+    
     // Get config account PDA - matches your lib.rs seeds
     const [configPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('config')],
@@ -267,7 +271,7 @@ export class SolanaClient {
 
   // Get program info
   getProgramId(): PublicKey {
-    return this.program.programId
+    return this.programId
   }
 
   // Get provider
@@ -278,5 +282,10 @@ export class SolanaClient {
   // Get connection
   getConnection(): Connection {
     return this.connection
+  }
+
+  // Check if program is initialized
+  isProgramInitialized(): boolean {
+    return this.program !== null
   }
 }
