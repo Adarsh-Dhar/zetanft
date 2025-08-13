@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use std::mem::size_of;
 
-declare_id!("HJHqL1vC4UMEYrrNqBEwfeK3XcWV2V2ZkfAeYNCMLdSe"); // Replace with your program ID
+declare_id!("GJFoDUiPNWPehjhCnzjE8gfcWfHNE9t7nRCbVV6bqtW2"); // Replace with your program ID
 
 #[program(skip-lint)]
 pub mod zetachain_gateway {
