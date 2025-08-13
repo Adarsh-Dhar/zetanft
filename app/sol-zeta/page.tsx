@@ -64,6 +64,13 @@ export default function SolZetaPage() {
       }
 
       const client = new SolanaClient(mockWallet, 'devnet')
+      
+      // Initialize the program after client creation
+      const programInitialized = await client.initializeProgram()
+      if (!programInitialized) {
+        throw new Error('Failed to initialize Solana program')
+      }
+      
       setSolanaClient(client)
       
       // Get initial balance
