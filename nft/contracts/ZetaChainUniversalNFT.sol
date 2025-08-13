@@ -13,6 +13,12 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 // Import UniversalNFTCore for universal NFT functionality
 import "@zetachain/standard-contracts/contracts/nft/contracts/zetachain/UniversalNFTCore.sol";
 
+struct NFTMintPayload {
+    address recipient;
+    string metadata_uri;
+    bytes32 unique_id;
+}
+
 contract ZetaChainUniversalNFT is
     Initializable, // Allows upgradeable contract initialization
     ERC721Upgradeable, // Base ERC721 implementation
@@ -25,6 +31,10 @@ contract ZetaChainUniversalNFT is
     UniversalNFTCore // Custom core for additional logic
 {
     uint256 private _nextTokenId; // Track next token ID for minting
+    // Track minted NFTs by unique ID
+    mapping(bytes32 => bool) public mintedIds;
+    // Store allowed origin chain (set in initialize)
+    uint256 public solanaChainId;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -37,7 +47,8 @@ contract ZetaChainUniversalNFT is
         string memory symbol,
         address payable gatewayAddress, // Include EVM gateway address
         uint256 gas, // Set gas limit for universal NFT calls
-        address uniswapRouterAddress // Uniswap v2 router address for gas token swaps
+        address uniswapRouterAddress,
+        uint256 _solanaChainId
     ) public initializer {
         __ERC721_init(name, symbol);
         __ERC721Enumerable_init();
@@ -47,6 +58,7 @@ contract ZetaChainUniversalNFT is
         __ERC721Burnable_init();
         __UUPSUpgradeable_init();
         __UniversalNFTCore_init(gatewayAddress, gas, uniswapRouterAddress); // Initialize universal NFT core
+        solanaChainId = _solanaChainId;
     }
 
     function safeMint(
@@ -132,6 +144,26 @@ contract ZetaChainUniversalNFT is
 
     function unpause() public onlyOwner {
         _unpause();
+    }
+
+    function onMessageReceived(
+        bytes calldata /* originSenderAddress */,
+        uint256 originChainId,
+        bytes calldata message
+    ) external payable onlyGateway {
+        require(originChainId == solanaChainId, "Invalid origin chain");
+
+        // message must be ABI-encoded as (address,string,bytes32)
+        (address recipient, string memory uri, bytes32 uniqueId) =
+            abi.decode(message, (address, string, bytes32));
+
+        require(!mintedIds[uniqueId], "NFT already minted");
+
+        uint256 tokenId = _nextTokenId++;
+        _safeMint(recipient, tokenId);
+        _setTokenURI(tokenId, uri);
+
+        mintedIds[uniqueId] = true;
     }
 
     receive() external payable {} // Receive ZETA to pay for gas
