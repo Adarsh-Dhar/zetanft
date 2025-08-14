@@ -15,7 +15,7 @@ import { SolanaClient } from "@/lib/solana-client"
 import { PublicKey } from "@solana/web3.js"
 
 export default function SolZetaPage() {
-  const { connected, publicKey } = useWallet()
+  const { connected, publicKey, wallet } = useWallet()
   const { toast } = useToast()
   const [solanaClient, setSolanaClient] = useState<SolanaClient | null>(null)
   const [balance, setBalance] = useState<number>(0)
@@ -44,26 +44,15 @@ export default function SolZetaPage() {
   })
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (connected && publicKey && wallet) {
       initializeSolanaClient()
     }
-  }, [connected, publicKey])
+  }, [connected, publicKey, wallet])
 
   const initializeSolanaClient = async () => {
     try {
-      // Create a mock wallet object that matches what SolanaClient expects
-      const mockWallet = {
-        publicKey: new PublicKey(publicKey!),
-        signTransaction: async (tx: any) => {
-          // This would be handled by the actual wallet
-          return tx
-        },
-        signAllTransactions: async (txs: any[]) => {
-          return txs
-        }
-      }
-
-      const client = new SolanaClient(mockWallet, 'devnet')
+      // Use the wallet from the context
+      const client = new SolanaClient(wallet, 'devnet')
       
       // Initialize the program after client creation
       const programInitialized = await client.initializeProgram()

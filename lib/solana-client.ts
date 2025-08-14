@@ -89,7 +89,7 @@ export class SolanaClient {
         .accounts({
           user: this.provider.wallet.publicKey,
           config: configPda,
-          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          gateway_program: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
           system_program: SystemProgram.programId,
         })
         .rpc()
@@ -143,7 +143,7 @@ export class SolanaClient {
           mint: mint,
           source_token_account: userTokenAccount,
           custody_token_account: custodyTokenAccount,
-          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          gateway_program: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
           token_program: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // SPL Token Program
           associated_token_program: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'), // Associated Token Program
           system_program: SystemProgram.programId,
@@ -178,7 +178,7 @@ export class SolanaClient {
         .accounts({
           user: this.provider.wallet.publicKey,
           config: configPda,
-          gateway_program: new PublicKey('11111111111111111111111111111111'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          gateway_program: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
         })
         .rpc()
 

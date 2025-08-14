@@ -30,6 +30,28 @@ pub mod zetachain_gateway {
         Ok(())
     }
 
+    /// Initialize the program with a custom seed (useful for testing)
+    pub fn initialize_with_seed(
+        ctx: Context<InitializeWithSeed>,
+        gateway_program_id: Pubkey,
+        zetachain_chain_id: u64,
+        owner: Pubkey,
+    ) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+        config.gateway_program_id = gateway_program_id;
+        config.zetachain_chain_id = zetachain_chain_id;
+        config.owner = owner;
+        config.bump = ctx.bumps.config;
+        
+        emit!(ProgramInitialized {
+            gateway_program_id,
+            zetachain_chain_id,
+            owner,
+        });
+        
+        Ok(())
+    }
+
     /// Deposit native SOL and trigger cross-chain call to ZetaChain
     pub fn deposit_and_call(
         ctx: Context<DepositAndCall>,
@@ -284,6 +306,24 @@ pub struct Initialize<'info> {
         bump
     )]
     pub config: Account<'info, Config>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+// Add a new struct for testing with custom seeds
+#[derive(Accounts)]
+pub struct InitializeWithSeed<'info> {
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + size_of::<Config>(),
+        seeds = [seed.key().as_ref()],
+        bump
+    )]
+    pub config: Account<'info, Config>,
+    /// CHECK: Seed for PDA derivation
+    pub seed: UncheckedAccount<'info>,
     #[account(mut)]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,

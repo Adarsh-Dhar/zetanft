@@ -79,68 +79,7 @@ export function MintForm() {
     setTransactionSteps(steps)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      setTransactionSteps((prev) =>
-        prev.map((step) =>
-          step.id === "upload"
-            ? {
-                ...step,
-                status: "completed",
-                txHash: "QmX7Y8Z9A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U",
-                timestamp: new Date().toISOString(),
-              }
-            : step.id === "metadata"
-              ? { ...step, status: "processing" }
-              : step,
-        ),
-      )
-
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      setTransactionSteps((prev) =>
-        prev.map((step) =>
-          step.id === "metadata"
-            ? {
-                ...step,
-                status: "completed",
-                txHash: "QmA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X",
-                timestamp: new Date().toISOString(),
-              }
-            : step.id === "mint"
-              ? { ...step, status: "processing" }
-              : step,
-        ),
-      )
-
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-      const mintTxHash = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-      setTransactionSteps((prev) =>
-        prev.map((step) =>
-          step.id === "mint"
-            ? {
-                ...step,
-                status: "completed",
-                txHash: mintTxHash,
-                timestamp: new Date().toISOString(),
-              }
-            : step.id === "verify"
-              ? { ...step, status: "processing" }
-              : step,
-        ),
-      )
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setTransactionSteps((prev) =>
-        prev.map((step) =>
-          step.id === "verify"
-            ? {
-                ...step,
-                status: "completed",
-                timestamp: new Date().toISOString(),
-              }
-            : step,
-        ),
-      )
-
+      // TODO: Implement real IPFS upload logic
       toast({
         title: "NFT Minted Successfully!",
         description: `Your NFT "${metadata.name}" has been minted successfully.`,

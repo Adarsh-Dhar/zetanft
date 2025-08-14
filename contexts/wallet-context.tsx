@@ -7,6 +7,7 @@ interface WalletContextType {
   connecting: boolean
   publicKey: string | null
   walletName: string | null
+  wallet: any | null
   connect: () => Promise<void>
   disconnect: () => void
   signTransaction: (transaction: any) => Promise<any>
@@ -24,6 +25,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const [connecting, setConnecting] = useState(false)
   const [publicKey, setPublicKey] = useState<string | null>(null)
   const [walletName, setWalletName] = useState<string | null>(null)
+  const [wallet, setWallet] = useState<any | null>(null)
 
   // Check if wallet is already connected on mount
   useEffect(() => {
@@ -39,6 +41,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
           setConnected(true)
           setPublicKey(response.publicKey.toString())
           setWalletName("Phantom")
+          setWallet(window.solana)
         }
       }
     } catch (error) {
@@ -57,6 +60,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
         setConnected(true)
         setPublicKey(response.publicKey.toString())
         setWalletName("Phantom")
+        setWallet(window.solana)
       } else {
         // Redirect to Phantom installation if not found
         window.open("https://phantom.app/", "_blank")
@@ -77,21 +81,22 @@ export function WalletProvider({ children }: WalletProviderProps) {
     setConnected(false)
     setPublicKey(null)
     setWalletName(null)
+    setWallet(null)
   }
 
   const signTransaction = async (transaction: any) => {
-    if (!connected || !window.solana) {
+    if (!connected || !wallet) {
       throw new Error("Wallet not connected")
     }
-    return await window.solana.signTransaction(transaction)
+    return await wallet.signTransaction(transaction)
   }
 
   const signMessage = async (message: string) => {
-    if (!connected || !window.solana) {
+    if (!connected || !wallet) {
       throw new Error("Wallet not connected")
     }
     const encodedMessage = new TextEncoder().encode(message)
-    const signedMessage = await window.solana.signMessage(encodedMessage, "utf8")
+    const signedMessage = await wallet.signMessage(encodedMessage, "utf8")
     return signedMessage.signature
   }
 
@@ -100,6 +105,7 @@ export function WalletProvider({ children }: WalletProviderProps) {
     connecting,
     publicKey,
     walletName,
+    wallet,
     connect,
     disconnect,
     signTransaction,
