@@ -89,7 +89,7 @@ export class SolanaClient {
         .accounts({
           user: this.provider.wallet.publicKey,
           config: configPda,
-          gateway_program: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          gatewayProgram: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
           system_program: SystemProgram.programId,
         })
         .rpc()
@@ -143,7 +143,7 @@ export class SolanaClient {
           mint: mint,
           source_token_account: userTokenAccount,
           custody_token_account: custodyTokenAccount,
-          gateway_program: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          gatewayProgram: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
           token_program: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // SPL Token Program
           associated_token_program: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'), // Associated Token Program
           system_program: SystemProgram.programId,
@@ -178,7 +178,7 @@ export class SolanaClient {
         .accounts({
           user: this.provider.wallet.publicKey,
           config: configPda,
-          gateway_program: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
+          gatewayProgram: new PublicKey('ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis'), // TODO: Replace with actual ZetaChain gateway program ID when known
         })
         .rpc()
 
@@ -240,28 +240,28 @@ export class SolanaClient {
     }
   }
 
-  private hexToBytes(hex: string): number[] {
+  private hexToBytes(hex: string): Uint8Array {
     try {
       if (hex.startsWith('0x')) {
         hex = hex.slice(2)
       }
-      const bytes = []
-      for (let i = 0; i < hex.length; i += 2) {
-        bytes.push(parseInt(hex.substr(i, 2), 16))
+      const bytes = new Uint8Array(20) // Fixed size 20 bytes
+      for (let i = 0; i < hex.length && i < 40; i += 2) { // Max 40 hex chars = 20 bytes
+        bytes[i/2] = parseInt(hex.substr(i, 2), 16)
       }
       return bytes
     } catch (error) {
       console.error('Failed to convert hex to bytes:', error)
-      return new Array(20).fill(0) // Return 20 zero bytes as fallback
+      return new Uint8Array(20) // Return 20 zero bytes as fallback
     }
   }
 
-  private serializeMessage(payload: any): Uint8Array {
+  private serializeMessage(payload: any): Buffer {
     try {
-      return new TextEncoder().encode(JSON.stringify(payload))
+      return Buffer.from(JSON.stringify(payload))
     } catch (error) {
       console.error('Failed to serialize message:', error)
-      return new Uint8Array()
+      return Buffer.alloc(0)
     }
   }
 

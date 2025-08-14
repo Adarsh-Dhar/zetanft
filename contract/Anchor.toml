@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-contract = "GJFoDUiPNWPehjhCnzjE8gfcWfHNE9t7nRCbVV6bqtW2"
+zetachain_gateway = "HmnB7toz4ckbzuTToptnXEf8LJ9PB8HVVsSFGZzybPet"
 
 [registry]
 url = "https://api.apr.dev"

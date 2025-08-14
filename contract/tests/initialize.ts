@@ -10,6 +10,24 @@ describe("initialize", () => {
 
   const program = anchor.workspace.ZetachainGateway as Program<ZetachainGateway>;
 
+  // Check if program is deployed before running tests
+  before(async () => {
+    console.log("🔍 Checking if program is deployed...");
+    console.log("Program ID:", program.programId.toString());
+    
+    const connection = provider.connection;
+    const programInfo = await connection.getAccountInfo(program.programId);
+    
+    if (!programInfo) {
+      console.log("❌ Program is not deployed on the network!");
+      console.log("💡 Please run 'anchor deploy' first to deploy the program.");
+      console.log("💡 Make sure you have SOL in your wallet for deployment fees.");
+      throw new Error("Program not deployed. Run 'anchor deploy' first.");
+    }
+    
+    console.log("✅ Program is deployed and ready for testing!");
+  });
+
   it("Initialize the program", async () => {
     // Your known values
     const gatewayProgramId = new PublicKey("ZETAjseVjuFsxdRxo6MmTCvqFwb3ZHUx56Co3vCmGis");
