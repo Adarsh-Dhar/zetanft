@@ -153,9 +153,38 @@ contract ZetaChainUniversalNFT is
     ) external payable onlyGateway {
         require(originChainId == solanaChainId, "Invalid origin chain");
 
-        // message must be ABI-encoded as (address,string,bytes32)
-        (address recipient, string memory uri, bytes32 uniqueId) =
-            abi.decode(message, (address, string, bytes32));
+        // Check if this is an NFT mint message
+        require(message.length >= 9, "Invalid message length"); // "NFT_MINT" + minimum data
+        
+        // Verify magic number
+        string memory magic = string(message[:9]);
+        require(keccak256(abi.encodePacked(magic)) == keccak256(abi.encodePacked("NFT_MINT")), "Invalid message type");
+        
+        // Decode the message: recipient (20 bytes) + uri_length (4 bytes) + uri + unique_id (32 bytes)
+        require(message.length >= 65, "Message too short"); // 9 + 20 + 4 + 32 minimum
+        
+        // Extract recipient address (20 bytes after magic)
+        address recipient;
+        assembly {
+            recipient := shr(96, calldataload(add(message.offset, 9)))
+        }
+        
+        // Extract URI length (4 bytes after recipient)
+        uint32 uriLength;
+        assembly {
+            uriLength := shr(224, calldataload(add(message.offset, 29)))
+        }
+        
+        // Extract URI string
+        require(message.length >= 33 + uriLength, "URI length mismatch");
+        string memory uri = string(message[33:33+uriLength]);
+        
+        // Extract unique ID (32 bytes after URI)
+        require(message.length >= 33 + uriLength + 32, "Message incomplete");
+        bytes32 uniqueId;
+        assembly {
+            uniqueId := calldataload(add(message.offset, add(33, uriLength)))
+        }
 
         require(!mintedIds[uniqueId], "NFT already minted");
 
@@ -164,7 +193,12 @@ contract ZetaChainUniversalNFT is
         _setTokenURI(tokenId, uri);
 
         mintedIds[uniqueId] = true;
+        
+        emit NFTMinted(recipient, tokenId, uri, uniqueId);
     }
 
     receive() external payable {} // Receive ZETA to pay for gas
+    
+    // Events
+    event NFTMinted(address indexed recipient, uint256 indexed tokenId, string metadataUri, bytes32 uniqueId);
 }

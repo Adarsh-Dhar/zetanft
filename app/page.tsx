@@ -1,5 +1,6 @@
 import { Navigation } from "@/components/navigation"
 import { HeroSection } from "@/components/hero-section"
+import { CrossChainNftMint } from "@/components/cross-chain-nft-mint"
 
 export default function HomePage() {
   return (
@@ -52,6 +53,19 @@ export default function HomePage() {
                 <p className="text-gray-600">Cryptographic proof of ownership with full transparency and security</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Cross-Chain NFT Minting Demo */}
+        <section className="py-16 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900">Cross-Chain NFT Minting</h2>
+              <p className="mt-4 text-lg text-gray-600">
+                Experience the power of cross-chain interoperability. Mint NFTs on ZetaChain directly from Solana!
+              </p>
+            </div>
+            <CrossChainNftMint />
           </div>
         </section>
       </main>

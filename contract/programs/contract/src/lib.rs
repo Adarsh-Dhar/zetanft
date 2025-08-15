@@ -52,16 +52,17 @@ pub mod zetachain_gateway {
         Ok(())
     }
 
-    /// Deposit native SOL and trigger cross-chain call to ZetaChain
+    /// Deposit native SOL and trigger cross-chain call to ZetaChain for NFT minting
     pub fn deposit_and_call(
         ctx: Context<DepositAndCall>,
         recipient_chain_id: u64,
         recipient_address: [u8; 20],
         amount: u64,
-        message: Vec<u8>,
+        metadata_uri: String,
+        unique_id: [u8; 32],
     ) -> Result<()> {
         require!(amount > 0, ErrorCode::InvalidAmount);
-        require!(!message.is_empty(), ErrorCode::EmptyMessage);
+        require!(!metadata_uri.is_empty(), ErrorCode::EmptyMessage);
         require!(
             recipient_chain_id == ctx.accounts.config.zetachain_chain_id,
             ErrorCode::InvalidChainId
@@ -82,17 +83,34 @@ pub mod zetachain_gateway {
             ],
         )?;
 
-        // Call ZetaChain Gateway
-        // let _gateway_cpi_ctx = CpiContext::new(
-        //     ctx.accounts.gateway_program.to_account_info(),
-        //     DepositAndCallCpi {
-        //         user: ctx.accounts.user.to_account_info(),
-        //         config: ctx.accounts.config.to_account_info(),
-        //     },
-        // );
+        // Create the message payload for ZetaChain NFT minting
+        // Format: (address recipient, string metadata_uri, bytes32 unique_id)
+        // This should match the ABI encoding expected by the Solidity contract
+        let mut message = Vec::new();
+        
+        // For ABI encoding, we need to follow the Solidity ABI specification
+        // Since we can't use proper ABI encoding here, we'll create a simple format
+        // that the ZetaChain contract can decode
+        
+        // Add a magic number to identify this as an NFT mint message
+        message.extend_from_slice(b"NFT_MINT");
+        
+        // Encode recipient address (20 bytes)
+        message.extend_from_slice(&recipient_address);
+        
+        // Encode metadata URI length and content
+        let uri_bytes = metadata_uri.as_bytes();
+        let uri_length = (uri_bytes.len() as u32).to_le_bytes();
+        message.extend_from_slice(&uri_length);
+        message.extend_from_slice(uri_bytes);
+        
+        // Generate unique ID from transaction signature and user
+        let unique_id = generate_unique_id(ctx.accounts.user.key(), &metadata_uri);
+        message.extend_from_slice(&unique_id);
 
-        // This would be the actual CPI call to ZetaChain Gateway
-        // gateway::cpi::deposit_and_call(gateway_cpi_ctx, recipient_chain_id, recipient_address, amount, message)?;
+        // For now, we'll just emit the event and prepare the message
+        // In production, this would call the actual ZetaChain Gateway program
+        // The actual gateway integration would be implemented here
 
         emit!(DepositAndCallExecuted {
             user: ctx.accounts.user.key(),
@@ -100,6 +118,48 @@ pub mod zetachain_gateway {
             recipient_address,
             amount,
             message: message.clone(),
+        });
+
+        Ok(())
+    }
+
+    /// Mint NFT on ZetaChain via cross-chain call
+    pub fn mint_nft_on_zetachain(
+        ctx: Context<MintNftOnZetaChain>,
+        recipient_address: [u8; 20],
+        metadata_uri: String,
+    ) -> Result<()> {
+        require!(!metadata_uri.is_empty(), ErrorCode::EmptyMessage);
+        
+        // Create the message payload for ZetaChain NFT minting
+        // Format: (address recipient, string metadata_uri, bytes32 unique_id)
+        let mut message = Vec::new();
+        
+        // Add a magic number to identify this as an NFT mint message
+        message.extend_from_slice(b"NFT_MINT");
+        
+        // Encode recipient address (20 bytes)
+        message.extend_from_slice(&recipient_address);
+        
+        // Encode metadata URI length and content
+        let uri_bytes = metadata_uri.as_bytes();
+        let uri_length = (uri_bytes.len() as u32).to_le_bytes();
+        message.extend_from_slice(&uri_length);
+        message.extend_from_slice(uri_bytes);
+        
+        // Generate unique ID from transaction signature and user
+        let unique_id = generate_unique_id(ctx.accounts.user.key(), &metadata_uri);
+        message.extend_from_slice(&unique_id);
+
+        // For now, we'll just emit the event and prepare the message
+        // In production, this would call the actual ZetaChain Gateway program
+        // The actual gateway integration would be implemented here
+
+        emit!(NftMintRequested {
+            user: ctx.accounts.user.key(),
+            recipient_address,
+            metadata_uri,
+            unique_id,
         });
 
         Ok(())
@@ -134,19 +194,9 @@ pub mod zetachain_gateway {
 
         token::transfer(transfer_ctx, amount)?;
 
-        // Call ZetaChain Gateway for SPL token deposit
-        // let _gateway_cpi_ctx = CpiContext::new(
-        //     ctx.accounts.gateway_program.to_account_info(),
-        //     DepositSplTokenAndCallCpi {
-        //         user: ctx.accounts.user.to_account_info(),
-        //         config: ctx.accounts.config.to_account_info(),
-        //         mint: ctx.accounts.mint.to_account_info(),
-        //         custody_token_account: ctx.accounts.custody_token_account.to_account_info(),
-        //     },
-        // );
-
-        // This would be the actual CPI call to ZetaChain Gateway
-        // gateway::cpi::deposit_spl_token_and_call(gateway_cpi_ctx, mint, recipient_chain_id, recipient_address, amount, message)?;
+        // For now, we'll just emit the event
+        // In production, this would call the actual ZetaChain Gateway program
+        // The actual gateway integration would be implemented here
 
         emit!(DepositSplTokenAndCallExecuted {
             user: ctx.accounts.user.key(),
@@ -237,16 +287,9 @@ pub mod zetachain_gateway {
     ) -> Result<()> {
         require!(amount > 0, ErrorCode::InvalidAmount);
 
-        // This would trigger a call on ZetaChain to initiate withdrawal
-        // let _gateway_cpi_ctx = CpiContext::new(
-        //     ctx.accounts.gateway_program.to_account_info(),
-        //     WithdrawAndCallCpi {
-        //         user: ctx.accounts.user.to_account_info(),
-        //         config: ctx.accounts.config.to_account_info(),
-        //     },
-        // );
-
-        // gateway::cpi::withdraw_and_call(gateway_cpi_ctx, recipient, amount, message)?;
+        // For now, we'll just emit the event
+        // In production, this would call the actual ZetaChain Gateway program
+        // The actual gateway integration would be implemented here
 
         emit!(WithdrawAndCallExecuted {
             user: ctx.accounts.user.key(),
@@ -343,6 +386,21 @@ pub struct DepositAndCall<'info> {
     /// CHECK: ZetaChain Gateway program - validated by CPI call
     pub gateway_program: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct MintNftOnZetaChain<'info> {
+    /// CHECK: User must be a signer for the transaction - validated by Signer type
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"config"],
+        bump = config.bump
+    )]
+    pub config: Account<'info, Config>,
+    /// CHECK: ZetaChain Gateway program - validated by CPI call
+    pub gateway_program: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
@@ -475,24 +533,6 @@ pub enum CrossChainAction {
     Custom,
 }
 
-// CPI context structs (these would match ZetaChain Gateway interface)
-pub struct DepositAndCallCpi<'info> {
-    pub user: AccountInfo<'info>,
-    pub config: AccountInfo<'info>,
-}
-
-pub struct DepositSplTokenAndCallCpi<'info> {
-    pub user: AccountInfo<'info>,
-    pub config: AccountInfo<'info>,
-    pub mint: AccountInfo<'info>,
-    pub custody_token_account: AccountInfo<'info>,
-}
-
-pub struct WithdrawAndCallCpi<'info> {
-    pub user: AccountInfo<'info>,
-    pub config: AccountInfo<'info>,
-}
-
 // Events
 #[event]
 pub struct ProgramInitialized {
@@ -558,6 +598,14 @@ pub struct OwnerUpdated {
     pub old_owner: Pubkey,
     pub new_owner: Pubkey,
     pub updated_by: Pubkey,
+}
+
+#[event]
+pub struct NftMintRequested {
+    pub user: Pubkey,
+    pub recipient_address: [u8; 20],
+    pub metadata_uri: String,
+    pub unique_id: [u8; 32],
 }
 
 // Error codes
