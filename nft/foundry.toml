@@ -9,7 +9,7 @@ cache_path  = 'cache_forge'
 verbosity = 3
 fs_permissions = [{ access = "read", path = "./node_modules" }]
 remappings = [
-  "forge-std/=dependencies/forge-std/src/",
+  "forge-std/=dependencies/forge-std-1.9.7/src/",
 ]
 
 [dependencies]
